@@ -73,3 +73,31 @@ class CenterViewFlowLayout: UICollectionViewFlowLayout {
 	}
 	
 }
+
+
+func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+    let layout = self.collectionView.collectionViewLayout as! UICollectionViewFlowLayout
+    let pageWidth = layout.itemSize.width + layout.minimumLineSpacing
+    let pageLeft = layout.sectionInset.left - layout.minimumLineSpacing / 2
+    let contentOffsetX = scrollView.contentOffset.x
+    var targetContentOffsetX = targetContentOffset.pointee.x
+    if let cell = self.collectionView.visibleCells.first {
+        var firstCell = cell
+        self.collectionView.visibleCells.forEach { (c) in
+            if c.frame.origin.x < firstCell.frame.origin.x {
+                firstCell = c
+            }
+        }
+        if let indexPath = self.collectionView.indexPath(for: firstCell) {
+            let identifierX = CGFloat(indexPath.row + 1) * pageWidth + pageLeft - contentOffsetX
+            if identifierX < self.collectionView.bounds.size.width / 2 {
+                let targetIndex = min(self.datas.count - 1, indexPath.row + 1)
+                targetContentOffsetX = pageWidth * CGFloat(targetIndex)
+            } else {
+                targetContentOffsetX = pageWidth * CGFloat(indexPath.row)
+            }
+        }
+    }
+    targetContentOffset.pointee.x = contentOffsetX
+    scrollView.setContentOffset(CGPoint(x: targetContentOffsetX, y: targetContentOffset.pointee.y), animated: true)
+}
